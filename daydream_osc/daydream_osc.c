@@ -14,6 +14,7 @@
 // Dependencies
 #include "etherdream.h"
 #include "tinyosc.h"
+#include "daydream_utils.h"
 
 /**
  * Minimum number of points required per frame to maintain stable laser output
@@ -70,41 +71,6 @@ static void sigint_handler(int signo) {
 }
 
 /**
- * Structure to store RGB color values
- * Each component ranges from 0 to 65535 (16-bit)
- */
-struct color {
-	uint16_t r;
-	uint16_t g;
-	uint16_t b;
-} current_stroke;
-
-/**
- * Generates a circle pattern for testing purposes
- *
- * @param points Array to store the generated points
- * @param offset Starting index in the points array
- * @param num_points Number of points to generate
- * @param x Center X coordinate
- * @param y Center Y coordinate
- * @param radius Radius of the circle
- * @param phase Phase offset for animation
- */
-void circle(struct etherdream_point *points, int offset, int num_points, int x, int y, int radius) {
-	int i;
-	for (i = 0; i < num_points; i++) {
-		struct etherdream_point *pt = &points[offset + i];
-		float ip = (float)i * 2.0 * M_PI / (float) num_points;
-
-		pt->x = x + sin(ip) * radius;
-		pt->y = y + cos(ip) * radius;
-		pt->r = 65535;
-		pt->g = 0;
-		pt->b = 0;
-	}
-}
-
-/**
  * Current number of points in the frame
  */
 int pcount = 0;
@@ -123,9 +89,9 @@ int pcount = 0;
  *
  * Example OSC messages:
  * 1. Add a red point at coordinates (1000, 2000):
- *    /p 1000 2000 65535 0 0
+ *    /p 1000 2000 256 0 0
  * 2. Set default color to white:
- *    /c 65535 65535 65535
+ *    /c 256 256 256
  * 3. Add a point using default color:
  *    /x 1500 2500
  * 4. Set points per second to 40000:
@@ -149,16 +115,16 @@ void handle_osc_message(tosc_message osc){
 		struct etherdream_point *pt = &points[pcount];
 		pt->x = (int16_t)  tosc_getNextInt32(&osc);
 		pt->y = (int16_t)  tosc_getNextInt32(&osc);
-		pt->r = (uint16_t) tosc_getNextInt32(&osc);
-		pt->g = (uint16_t) tosc_getNextInt32(&osc);
-		pt->b = (uint16_t) tosc_getNextInt32(&osc);
+		pt->r = byte2word(tosc_getNextInt32(&osc));
+		pt->g = byte2word(tosc_getNextInt32(&osc));
+		pt->b = byte2word(tosc_getNextInt32(&osc));
 		pcount++;
 
 	// "/c" : sets the default color.
 	} else if (strcmp(mess, "/c") == 0) {
-		current_stroke.r = (uint16_t) tosc_getNextInt32(&osc);
-		current_stroke.g = (uint16_t) tosc_getNextInt32(&osc);
-		current_stroke.b = (uint16_t) tosc_getNextInt32(&osc);
+		current_stroke.r = byte2word(tosc_getNextInt32(&osc));
+		current_stroke.g = byte2word(tosc_getNextInt32(&osc));
+		current_stroke.b = byte2word(tosc_getNextInt32(&osc));
 
 	// "/x" : add a point by using the default color.
 	} else if (strcmp(mess, "/x") == 0) {
@@ -177,7 +143,7 @@ void handle_osc_message(tosc_message osc){
 	// "/set_pps"
 	} else if (strcmp(mess, "/set_pps") == 0) {
 		pps = tosc_getNextInt32(&osc);
-		// printf("pps = %d\n", pps);
+		printf("pps = %d\n", pps);
 
 	// "/set_loop_count"
 	} else if (strcmp(mess, "/set_loop_count") == 0) {
@@ -189,6 +155,7 @@ void handle_osc_message(tosc_message osc){
 	} else if (strcmp(mess, "/test_pattern") == 0) {
 		pcount = 256;
 		circle(points, pcount * 0, pcount, 0, 0, 32768 - 1);
+		printf("test pattern\n");
 	}
 }
 
