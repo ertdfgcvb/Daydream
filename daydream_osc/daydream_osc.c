@@ -19,7 +19,7 @@
 /**
  * Minimum number of points required per frame to maintain stable laser output
  */
-#define MIN_POINTS_PER_FRAME 64
+#define MIN_POINTS_PER_FRAME 200
 
 /**
  * Maximum number of points that can be stored in a single frame
@@ -245,30 +245,33 @@ int main(int argc, char **argv) {
 				}
      		}
 
-     		// Ensure minimum number of points for stable laser output
-			if (pcount < MIN_POINTS_PER_FRAME) {
-				// Get the last valid point to use as reference
-				struct etherdream_point *last = &points[pcount];
-				// Fill remaining points with blank (off) points
-				for (int i=pcount; i<MIN_POINTS_PER_FRAME; i++){
-					struct etherdream_point *pt = &points[i];
-					pt->x = last->x;  // Maintain last position
-					pt->y = last->y;  // Maintain last position
-					pt->r = 0;        // Laser off
-					pt->g = 0;        // Laser off
-					pt->b = 0;        // Laser off
-				}
-			}
+
 		}
 
 		// Check if DAC is ready to receive new data
 		if (etherdream_is_ready(dac)) {
 			// Send point data to DAC if we have points
 			if (pcount > 0) {
-				// Use actual point count if above minimum, otherwise use minimum
-				int c = pcount > MIN_POINTS_PER_FRAME ? pcount : MIN_POINTS_PER_FRAME;
+
+				// Ensure minimum number of points for stable laser output
+				while(pcount < MIN_POINTS_PER_FRAME) {
+					// Get the last valid point to use as reference
+					struct etherdream_point *last = &points[pcount];
+					// Fill remaining points with blank (off) points
+					for (int i=pcount; i<MIN_POINTS_PER_FRAME; i++){
+						struct etherdream_point *pt = &points[i];
+						pt->x = last->x;  // Maintain last position
+						pt->y = last->y;  // Maintain last position
+						pt->r = 0;        // Laser off
+						pt->g = 0;        // Laser off
+						pt->b = 0;        // Laser off
+					}
+					pcount++;
+				}
+
 				// Send points to DAC with current PPS and loop settings
-				etherdream_write(dac, points, c, pps, loop_count);
+				etherdream_write(dac, points, pcount, pps, loop_count);
+				pcount = 0;
 			} else {
 				// Stop DAC if no points are available
 				etherdream_stop(dac);
