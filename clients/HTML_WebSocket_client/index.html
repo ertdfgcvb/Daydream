@@ -1,0 +1,158 @@
+<html>
+<head>
+
+	<script>
+
+	/* WebSocket. */
+	var ws;
+	var connected = false;
+
+	function scoll_to_bottom()
+	{
+		var logTa = document.getElementById("taLog")
+		logTa.scrollTop = logTa.scrollHeight;
+	}
+
+	/* Establish connection. */
+	function doConnect(addr)
+	{
+		/* Message to be sent. */
+		var msg;
+
+		/* Do connection. */
+		ws = new WebSocket(addr);
+
+		/* Register events. */
+		ws.onopen = function()
+		{
+			connected = true;
+			document.getElementById("btConn").value = "Disconnect!";
+			document.getElementById("taLog").value += ("Connection opened\n");
+			scoll_to_bottom();
+		};
+
+		/* Deals with messages. */
+		ws.onmessage = function (evt) {
+			document.getElementById("taLog").value += ("Recv: " + evt.data + "\n");
+			scoll_to_bottom();
+		}
+
+		/* Close events. */
+		ws.onclose = function(event) {
+			document.getElementById("btConn").value = "Connect!";
+			document.getElementById("taLog").value +=
+				("Connection closed: wasClean: " + event.wasClean + ", evCode: "
+					+ event.code + "\n");
+			scoll_to_bottom();
+			connected = false;
+		}
+	}
+
+	document.addEventListener("DOMContentLoaded", function(event) {
+		/* Connect buttom. */
+		document.getElementById("btConn").onclick = function() {
+			if (!connected) {
+				var txt = document.getElementById("txtServer").value
+				doConnect(txt)
+			} else {
+				ws.close()
+				connected = false
+				document.getElementById("btConn").value = "Connect!"
+			}
+		};
+
+		/* Input text message. */
+		document.getElementById("txtMsg").addEventListener('keyup', function(e) {
+			var key = e.which || e.keyCode;
+			if (key == 13)
+				document.getElementById("btMsg").click();
+		})
+
+		/* Send message. */
+		document.getElementById("btMsg").onclick = function() {
+			if (connected == true)
+			{
+				var txt = document.getElementById("txtMsg");
+				var log = document.getElementById("taLog");
+
+				ws.send(txt.value);
+				log.value += ("Send: " + txt.value + "\n");
+				txt.value = "";
+				scoll_to_bottom();
+			}
+		}
+
+		document.getElementById("btMsg").onclick = function() {
+			if (connected == true)
+			{
+				var txt = document.getElementById("txtMsg");
+				var log = document.getElementById("taLog");
+
+				ws.send(txt.value);
+				log.value += ("Send: " + txt.value + "\n");
+				txt.value = "";
+				scoll_to_bottom();
+			}
+		}
+
+		document.getElementById("circle").onclick = function() {
+			if (connected){
+
+				let t = 0
+				ws.send("/set_loop_count -1")
+				ws.send("/set_pps 30000")
+
+				setInterval(function() {
+
+					const side = 32768 - 1
+
+					t += 0.015
+
+					let str = "/xyrgb"
+
+					const res = 500
+					for (let i=0; i<res; i++) {
+						const a = Math.PI * 2 / res * i
+						const r = 0
+						const x = Math.floor((Math.cos(a * 3) * (1 - r)) * side)
+						const y = Math.floor((Math.sin(a * 4 + t) * (1 - r)) * side)
+						const R = Math.floor((Math.sin(a * 2 - t * 6) * 0.5 + 0.5) * 255.0)
+						const G = Math.floor((Math.sin(a * 3 - t * 7) * 0.5 + 0.5) * 255.0)
+						const B = Math.floor((Math.sin(a * 4 - t * 8) * 0.5 + 0.5) * 255.0)
+
+						//const str = "/p " + [x, y, R, G, B].join(' ')
+						// const str = "/x " + [x, y].join(' ')
+						// console.log(str)
+						str += " " + [x, y, R, G, B].join(' ')
+					}
+
+					ws.send(str)
+					ws.send("/write")
+
+				}, 30);
+			}
+		}
+	});
+	</script>
+</head>
+<body>
+
+	<div id="header">
+		<h1 align="left">wsServer</h1>
+		Server: <br>
+		<input type="text" id="txtServer" value="ws://localhost:8080">
+		<input type="button" id="btConn" name="btConn" value="Connect!"><br>
+		<br>
+
+		Message: <br>
+		<input type="text" id="txtMsg" value="" placeholder="/p x y r g b">
+		<input type="button" id="btMsg" name="btMsg" value="Send"><br>
+		<br>
+
+		<input type="button" id="circle" name="circle" value="Draw circle"><br>
+		<br>
+
+		<textarea rows="10" cols="50" id="taLog" name="taLog"></textarea>
+	</div>
+</body>
+</html>
