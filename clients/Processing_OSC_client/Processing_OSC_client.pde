@@ -60,8 +60,8 @@ void draw() {
   for (int i=0; i<res; i++) {
     float a = TWO_PI / res * i;
     float r = sin( a * 16 - t * 8 ) * 0.3;
-    float x = width/2 + (cos(a * 3 + t) * (1 - r)) * width * 0.3;
-    float y = height/2 + (sin(a * 6) * (1 - r)) * height * 0.3;
+    float x = width/2 + (cos(a * 3 + t) * (1 - r)) * width * 0.1;
+    float y = height/2 + (sin(a * 6) * (1 - r)) * height * 0.1;
     float R = floor(map(sin(a * 2 - t * 6), -1, 1, 0, 255));
     float G = floor(map(sin(a * 3 - t * 7), -1, 1, 0, 255));
     float B = floor(map(sin(a * 4 - t * 8), -1, 1, 0, 255));
