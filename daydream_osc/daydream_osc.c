@@ -89,9 +89,9 @@ int pcount = 0;
  *
  * Example OSC messages:
  * 1. Add a red point at coordinates (1000, 2000):
- *    /p 1000 2000 256 0 0
+ *    /p 1000 2000 255 0 0
  * 2. Set default color to white:
- *    /c 256 256 256
+ *    /c 255 255 255
  * 3. Add a point using default color:
  *    /x 1500 2500
  * 4. Set points per second to 40000:
