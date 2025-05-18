@@ -1,5 +1,9 @@
 # binaries
 daydream_osc/daydream_osc
+daydream_ws/daydream_ws
+
+# backups
+*_bak
 
 # macOS
 .DS_Store
